@@ -15,6 +15,8 @@ from shutil import chown
 from shutil import copyfile
 from time import strftime
 
+from ocflib.misc.shell import edit_file
+
 
 class ForgivingFormatter(string.Formatter):
 
@@ -150,11 +152,13 @@ def get_membership_status(folder):
     return status
 
 
-def minutes_setup(notes, choice):
-    if not exists(notes):
-        copyfile(get_template(choice), notes)
-        set_group_and_permissions(notes)
-    with open(notes, 'r') as f:
+def minutes_setup(choice):
+    """Opens up a template for the proper note type in a text editor.
+
+    Returns the file contents after editing and whether any changes were made.
+    from the template.
+    """
+    with open(get_template(choice), 'r') as f:
         s = f.read()
     s = ForgivingFormatter().format(
         format_string=s,
@@ -162,19 +166,18 @@ def minutes_setup(notes, choice):
         start_time=strftime('%H:%M'),
         quorum=str(quorum()),
     )
-    with open(notes, 'w') as f:
-        f.write(s)
+    edits = edit_file(s)
+    return edits, s != edits
 
 
-def minutes_done(notes, choice):
-    with open(notes, 'r') as f:
-        s = f.read()
+def minutes_done(notes, edits, choice):
     s = ForgivingFormatter().format(
-        format_string=s,
+        format_string=edits,
         end_time=strftime('%H:%M'),
     )
     with open(notes, 'w') as f:
         f.write(s)
+    set_group_and_permissions(notes)
     if choice == 'bod':
         update_membership()
 

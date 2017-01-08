@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import os
-from subprocess import call
 from sys import exit
 
 import meetings
-from ocflib.misc.shell import get_editor
 
 # note that bod (which is stored in public_html, as they are publicly
 # readable) is symlinked in this folder
@@ -30,11 +28,10 @@ def main():
 
     notes = os.path.join(meetings.get_current_minutes_path(choice), name)
 
-    meetings.minutes_setup(notes, choice)
+    edits, changed = meetings.minutes_setup(choice)
 
-    call([get_editor(), notes])
-
-    meetings.minutes_done(notes, choice)
+    if changed:
+        meetings.minutes_done(notes, edits, choice)
 
 
 if __name__ == '__main__':
